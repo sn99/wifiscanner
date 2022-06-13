@@ -12,7 +12,7 @@ pub fn scan() -> Result<Vec<Wifi>> {
 
     let data = String::from_utf8_lossy(&output.stdout);
 
-    parse_netsh(&data)
+    parse_netsh_network_list(&data)
 }
 
 /// Returns a list of WiFi interfaces - (Windows) uses `netsh`  
@@ -25,11 +25,59 @@ pub fn show_interfaces() -> Result<Vec<Wifi>> {
 
     let data = String::from_utf8_lossy(&output.stdout);
 
-    parse_netsh(&data)
+    parse_netsh_interface_list(&data)
 }
 
+fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
+    let mut wifis = Vec::new();
 
-fn parse_netsh(network_list: &str) -> Result<Vec<Wifi>> {
+    // Regex for matching split, SSID and MAC, since these aren't pulled directly
+    let split_regex = Regex::new("\nName").map_err(|_| Error::SyntaxRegexError)?;
+
+    for block in split_regex.split(interface_list) {
+        let mut wifi_ssid = String::new();
+        let mut wifi_bssid = String::new();
+        let mut wifi_state = String::new();
+        let mut wifi_security = String::new();
+        let mut wifi_rssi = 0i32;
+        let mut wifi_channel = String::new();
+
+        for line in block.lines() {
+            if line.contains("Authentication") {
+                wifi_state = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
+            } else if line.contains("State") {
+                wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
+            } else if line.contains("BSSID") {
+                wifi_bssid = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
+            } else if line.contains("SSID") {
+                wifi_ssid = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
+            } else if line.contains("Signal") {
+                let percent = line
+                    .splitn(2, ':')
+                    .nth(1)
+                    .unwrap_or("")
+                    .trim()
+                    .replace('%', "");
+                let percent: i32 = percent.parse().map_err(|_| Error::SyntaxRegexError)?;
+                wifi_rssi = percent / 2 - 100;
+            } else if line.contains("Channel") {
+                wifi_channel = line.split(':').nth(1).unwrap_or("").trim().to_string();
+            }
+        }
+
+        wifis.push(Wifi {
+            mac: wifi_bssid.as_str().to_string(),
+            ssid: wifi_ssid.to_string(),
+            channel: wifi_channel.to_string(),
+            signal_level: wifi_rssi.to_string(),
+            state: wifi_state.to_string(),
+            security: wifi_security.to_string(),
+        });
+    }
+    Ok(wifis)
+}
+
+fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
     let mut wifis = Vec::new();
 
     // Regex for matching split, SSID and MAC, since these aren't pulled directly
