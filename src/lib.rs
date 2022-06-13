@@ -72,6 +72,8 @@ pub struct Wifi {
     pub channel: String,
     /// wifi signal strength in dBm
     pub signal_level: String,
+    /// Wifi state (connected or not)
+    pub state: String,
     /// this field is currently empty in the Linux version of the lib
     pub security: String,
 }
@@ -100,4 +102,11 @@ impl std::error::Error for Error {}
 /// Uses `airport` on macOS and `iw` on Linux.
 pub fn scan() -> Result<Vec<Wifi>> {
     crate::sys::scan()
+}
+
+/// Returns a list of WiFi interfaces.
+/// Uses `airport` on macOS and `iw` on Linux.
+#[cfg(target_os = "windows")]
+pub fn show_interfaces() -> Result<Vec<Wifi>> {
+    crate::sys::show_interfaces()
 }
