@@ -8,10 +8,11 @@ documentation = "https://docs.rs/wifiscanner"
 readme = "README.md"
 keywords = ["wifi","hotspots","network"]
 license = "Apache-2.0"
+edition = "2021"
 
 [[bin]]
 name = "wifiscanner"
 
 [dependencies]
 regex = "1"
-itertools = "0.10.0"
+itertools = "0.10"
