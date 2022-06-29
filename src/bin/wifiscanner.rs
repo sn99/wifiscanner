@@ -3,7 +3,7 @@ fn main() {
     println!("== List of networks");
     for network in networks {
         println!(
-            "{} {:15} {:10} {:4} {}",
+            "{} {:20} {:10} {:4} {}",
             network.mac, network.ssid, network.channel, network.signal_level, network.security
         );
     }
@@ -14,7 +14,7 @@ fn main() {
         println!("== List of interfaces");
         for network in interfaces {
             println!(
-                "{} {:15} {:10} {:4} {} {}",
+                "{} {:20} {:10} {:4} {} {}",
                 network.mac,
                 network.ssid,
                 network.channel,

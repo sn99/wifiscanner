@@ -44,9 +44,9 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
 
         for line in block.lines() {
             if line.contains("Authentication") {
-                wifi_state = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
-            } else if line.contains("State") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
+            } else if line.contains("State") {
+                wifi_state = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
                 wifi_bssid = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("SSID") {
