@@ -89,7 +89,7 @@ fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
         let mut wifi_macs = Vec::new();
         let mut wifi_ssid = String::new();
         let mut wifi_channels = Vec::new();
-        let mut wifi_state = String::new();
+        let mut wifi_state = "Not Determined".to_string();
         let mut wifi_rssi = Vec::new();
         let mut wifi_security = String::new();
 
@@ -97,9 +97,9 @@ fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
             if ssid_regex.is_match(line) {
                 wifi_ssid = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("Authentication") {
-                wifi_state = line.split(':').nth(1).unwrap_or("").trim().to_string();
-            } else if line.contains("State") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
+            } else if line.contains("State") {
+                wifi_state = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
                 let captures = mac_regex.captures(line).ok_or(Error::SyntaxRegexError)?;
                 wifi_macs.push(captures.get(0).ok_or(Error::SyntaxRegexError)?);
@@ -174,7 +174,7 @@ mod tests {
         // Load test fixtures
         let fixture = fs::read_to_string("tests/fixtures/netsh/netsh01_windows81.txt").unwrap();
 
-        let result = parse_netsh(&fixture).unwrap();
+        let result = parse_netsh_network_list(&fixture).unwrap();
         assert_eq!(expected[0], result[0]);
         assert_eq!(expected[1], result[1]);
         assert_eq!(expected[2], result[2]);
