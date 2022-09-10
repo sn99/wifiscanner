@@ -1,12 +1,17 @@
 use regex::Regex;
 
+use std::os::windows::process::CommandExt;
+use std::process::Command;
+
 use crate::{Error, Result, Wifi};
+
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 /// Returns a list of WiFi hotspots in your area - (Windows) uses `netsh`
 pub fn scan() -> Result<Vec<Wifi>> {
-    use std::process::Command;
     let output = Command::new("netsh.exe")
         .args(&["wlan", "show", "networks", "mode=Bssid"])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|_| Error::CommandNotFound)?;
 
@@ -17,9 +22,9 @@ pub fn scan() -> Result<Vec<Wifi>> {
 
 /// Returns a list of WiFi interfaces - (Windows) uses `netsh`  
 pub fn show_interfaces() -> Result<Vec<Wifi>> {
-    use std::process::Command;
     let output = Command::new("netsh.exe")
         .args(&["wlan", "show", "interfaces"])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|_| Error::CommandNotFound)?;
 
