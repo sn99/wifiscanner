@@ -72,8 +72,6 @@ pub struct Wifi {
     pub channel: String,
     /// wifi signal strength in dBm
     pub signal_level: String,
-    /// Wifi state (connected or not)
-    pub state: String,
     /// this field is currently empty in the Linux version of the lib
     pub security: String,
 }

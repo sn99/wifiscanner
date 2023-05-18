@@ -53,6 +53,7 @@ fn parse_airport(network_list: &str) -> Result<Vec<Wifi>> {
             channel: channel.to_string(),
             signal_level: signal_level.to_string(),
             security: security.to_string(),
+            ..Default::default()
         });
     }
 

@@ -45,7 +45,6 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
     for block in split_regex.split(interface_list) {
         let mut wifi_ssid = String::new();
         let mut wifi_bssid = String::new();
-        let mut wifi_state = String::new();
         let mut wifi_security = String::new();
         let mut wifi_rssi = 0i32;
         let mut wifi_channel = String::new();
@@ -53,8 +52,6 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
         for line in block.lines() {
             if line.contains("Authentication") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
-            } else if line.contains("State") {
-                wifi_state = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
                 wifi_bssid = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
             } else if line.contains("SSID") {
@@ -76,7 +73,6 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
             ssid: wifi_ssid.to_string(),
             channel: wifi_channel.to_string(),
             signal_level: wifi_rssi.to_string(),
-            state: wifi_state.to_string(),
             security: wifi_security.to_string(),
         });
     }
@@ -95,7 +91,6 @@ fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
         let mut wifi_macs = Vec::new();
         let mut wifi_ssid = String::new();
         let mut wifi_channels = Vec::new();
-        let mut wifi_state = "Not Determined".to_string();
         let mut wifi_rssi = Vec::new();
         let mut wifi_security = String::new();
 
@@ -104,8 +99,6 @@ fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
                 wifi_ssid = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("Authentication") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
-            } else if line.contains("State") {
-                wifi_state = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
                 let captures = mac_regex.captures(line).ok_or(Error::SyntaxRegexError)?;
                 wifi_macs.push(captures.get(0).ok_or(Error::SyntaxRegexError)?);
@@ -124,7 +117,6 @@ fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
                 ssid: wifi_ssid.to_string(),
                 channel: channel.to_string(),
                 signal_level: rssi.to_string(),
-                state: wifi_state.to_string(),
                 security: wifi_security.to_string(),
             });
         }
