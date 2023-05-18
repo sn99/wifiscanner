@@ -101,10 +101,3 @@ impl std::error::Error for Error {}
 pub fn scan() -> Result<Vec<Wifi>> {
     crate::sys::scan()
 }
-
-/// Returns a list of WiFi interfaces.
-/// Uses `airport` on macOS and `iw` on Linux.
-#[cfg(target_os = "windows")]
-pub fn show_interfaces() -> Result<Vec<Wifi>> {
-    crate::sys::show_interfaces()
-}
