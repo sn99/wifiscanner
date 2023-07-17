@@ -1,3 +1,4 @@
+#![cfg(windows)]
 use regex::Regex;
 
 use std::os::windows::process::CommandExt;
@@ -32,7 +33,6 @@ pub fn show_interfaces() -> Result<Vec<Wifi>> {
         .map_err(|_| Error::CommandNotFound)?;
 
     let data = String::from_utf8_lossy(&output.stdout);
-
     parse_netsh_interface_list(&data)
 }
 
@@ -53,11 +53,23 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
             if line.contains("Authentication") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
-                wifi_bssid = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
+                wifi_bssid = line
+                    .split_once(':')
+                    .map(|x| x.1)
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
             } else if line.contains("SSID") {
-                wifi_ssid = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
+                wifi_ssid = line
+                    .split_once(':')
+                    .map(|x| x.1)
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
             } else if line.contains("Signal") {
-                let percent = line.split_once(':').map(|x| x.1)
+                let percent = line
+                    .split_once(':')
+                    .map(|x| x.1)
                     .unwrap_or("")
                     .trim()
                     .replace('%', "");
