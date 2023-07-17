@@ -23,12 +23,8 @@ pub fn scan() -> Result<Vec<Wifi>> {
 /// Returns a list of WiFi interfaces - (Windows) uses `netsh`  
 pub fn show_interfaces() -> Result<Vec<Wifi>> {
     let output = Command::new("netsh.exe")
-<<<<<<< HEAD
-        .args(&["wlan", "show", "interfaces"])
-        .creation_flags(CREATE_NO_WINDOW)
-=======
         .args(["wlan", "show", "interfaces"])
->>>>>>> 8d7149a (chore: clippy fixes)
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|_| Error::CommandNotFound)?;
 
