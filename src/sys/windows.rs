@@ -10,8 +10,7 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 /// Returns a list of WiFi hotspots in your area - (Windows) uses `netsh`
 pub fn scan() -> Result<Vec<Wifi>> {
     let output = Command::new("netsh.exe")
-        .args(&["wlan", "show", "networks", "mode=Bssid"])
-        .creation_flags(CREATE_NO_WINDOW)
+        .args(["wlan", "show", "networks", "mode=Bssid"])
         .output()
         .map_err(|_| Error::CommandNotFound)?;
 
@@ -23,8 +22,12 @@ pub fn scan() -> Result<Vec<Wifi>> {
 /// Returns a list of WiFi interfaces - (Windows) uses `netsh`  
 pub fn show_interfaces() -> Result<Vec<Wifi>> {
     let output = Command::new("netsh.exe")
+<<<<<<< HEAD
         .args(&["wlan", "show", "interfaces"])
         .creation_flags(CREATE_NO_WINDOW)
+=======
+        .args(["wlan", "show", "interfaces"])
+>>>>>>> 8d7149a (chore: clippy fixes)
         .output()
         .map_err(|_| Error::CommandNotFound)?;
 
@@ -51,15 +54,13 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
             if line.contains("Authentication") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("State") {
-                wifi_state = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
+                wifi_state = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
-                wifi_bssid = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
+                wifi_bssid = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
             } else if line.contains("SSID") {
-                wifi_ssid = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
+                wifi_ssid = line.split_once(':').map(|x| x.1).unwrap_or("").trim().to_string();
             } else if line.contains("Signal") {
-                let percent = line
-                    .splitn(2, ':')
-                    .nth(1)
+                let percent = line.split_once(':').map(|x| x.1)
                     .unwrap_or("")
                     .trim()
                     .replace('%', "");
