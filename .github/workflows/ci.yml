@@ -68,18 +68,18 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - name: Build & Deploy to crates.io
-        run: |
-          cargo build --release
-          cargo publish --token ${{ secrets.CRATES_TOKEN }}
+      # - name: Build & Deploy to crates.io
+      #  run: |
+      #    cargo build --release
+      #    cargo publish --token ${{ secrets.CRATES_TOKEN }}
 
-      - name: Create Github Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # already provided by GH Actions
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
+      #- name: Create Github Release
+      #  id: create_release
+      #  uses: actions/create-release@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # already provided by GH Actions
+      #  with:
+      #    tag_name: ${{ github.ref }}
+      #    release_name: ${{ github.ref }}
+      #    draft: false
+      #    prerelease: false
