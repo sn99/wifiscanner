@@ -2,8 +2,58 @@ use crate::{Error, Result, Wifi};
 use std::env;
 use std::process::Command;
 
-/// Returns a list of WiFi hotspots in your area - (Linux) uses `iw`
+/// Returns a list of WiFi hotspots in your area - (Linux) uses `nmcli`
 pub(crate) fn scan() -> Result<Vec<Wifi>> {
+    let output = Command::new("nmcli")
+        .arg("--color")
+        .arg("no")
+        .arg("--terse")
+        .arg("-f")
+        .arg("ssid,chan,signal,security,bssid")
+        .arg("dev")
+        .arg("wifi")
+        .arg("list")
+        .output()
+        .map_err(|_| Error::CommandNotFound)?;
+
+    let data = String::from_utf8_lossy(&output.stdout);
+
+    let mut result = vec![];
+    for line in data.lines() {
+        let mut wifi = Wifi::default();
+        let mut fs = line.splitn(5, ':');
+        if let Some(ssid) = fs.next() {
+            wifi.ssid = ssid.to_string();
+        } else {
+            continue;
+        }
+        if let Some(channel) = fs.next() {
+            wifi.channel = channel.to_string();
+        } else {
+            continue;
+        }
+        if let Some(signal_level) = fs.next() {
+            wifi.signal_level = signal_level.to_string();
+        } else {
+            continue;
+        }
+        if let Some(security) = fs.next() {
+            wifi.security = security.to_string();
+        } else {
+            continue;
+        }
+        if let Some(mac) = fs.next() {
+            wifi.mac = mac.replace(r"\:", ":").to_string();
+        } else {
+            continue;
+        }
+        result.push(wifi);
+    }
+    Ok(result)
+}
+
+/// Returns a list of WiFi hotspots in your area - (Linux) uses `iw`
+pub(crate) fn scan_iw() -> Result<Vec<Wifi>> {
     const PATH_ENV: &'static str = "PATH";
     let path_system = "/usr/sbin:/sbin";
     let path = env::var_os(PATH_ENV).map_or(path_system.to_string(), |v| {
@@ -50,7 +100,7 @@ fn parse_iw_dev(interfaces: &str) -> Result<String> {
 fn parse_iw_dev_scan(network_list: &str) -> Result<Vec<Wifi>> {
     let mut wifis: Vec<Wifi> = Vec::new();
     let mut wifi = Wifi::default();
-    for line in network_list.split("\n") {
+    for line in network_list.lines() {
         if let Ok(mac) = extract_value(line, "BSS ", Some("(")) {
             if !wifi.mac.is_empty()
                 && !wifi.signal_level.is_empty()
@@ -102,6 +152,16 @@ mod tests {
     use std::fs::File;
     use std::io::Read;
     use std::path::PathBuf;
+
+    #[test]
+    fn test_nmcli() {
+        if let Err(e) = Command::new("nmcli").arg("--version").output() {
+            eprintln!("nmlci is not found: {e}");
+            return;
+        }
+        let wifis = scan_nm().expect("failed to scan");
+        println!("Wifis: {wifis:?}");
+    }
 
     #[test]
     fn should_parse_iw_dev() {
