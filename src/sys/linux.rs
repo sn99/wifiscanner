@@ -2,8 +2,13 @@ use crate::{Error, Result, Wifi};
 use std::env;
 use std::process::Command;
 
-/// Returns a list of WiFi hotspots in your area - (Linux) uses `nmcli`
+/// Returns a list of WiFi hotspots in your area - (Linux). uses `nmcli` or `iw`.
 pub(crate) fn scan() -> Result<Vec<Wifi>> {
+    scan_nm().and_then(|_| scan_iw())
+}
+
+/// Returns a list of WiFi hotspots in your area - (Linux) uses `nmcli`
+fn scan_nm() -> Result<Vec<Wifi>> {
     let output = Command::new("nmcli")
         .arg("--color")
         .arg("no")
@@ -53,7 +58,7 @@ pub(crate) fn scan() -> Result<Vec<Wifi>> {
 }
 
 /// Returns a list of WiFi hotspots in your area - (Linux) uses `iw`
-pub(crate) fn scan_iw() -> Result<Vec<Wifi>> {
+fn scan_iw() -> Result<Vec<Wifi>> {
     const PATH_ENV: &'static str = "PATH";
     let path_system = "/usr/sbin:/sbin";
     let path = env::var_os(PATH_ENV).map_or(path_system.to_string(), |v| {
@@ -168,15 +173,8 @@ mod tests {
         let expected = "wlp2s0";
 
         // FIXME: should be a better way to create test fixtures
-        let mut path = PathBuf::new();
-        path.push("tests");
-        path.push("fixtures");
-        path.push("iw");
-        path.push("iw_dev_01.txt");
-
-        let file_path = path.as_os_str();
-
-        let mut file = File::open(&file_path).unwrap();
+        let path = PathBuf::from("tests/fixtures/iw/iw_dev_01.txt");
+        let mut file = File::open(&path).unwrap();
 
         let mut filestr = String::new();
         let _ = file.read_to_string(&mut filestr).unwrap();
@@ -193,7 +191,7 @@ mod tests {
             ssid: "hello".to_string(),
             channel: "10".to_string(),
             signal_level: "-67.00".to_string(),
-            security: "".to_string(),
+            security: "PSK".to_string(),
         });
 
         expected.push(Wifi {
@@ -201,25 +199,17 @@ mod tests {
             ssid: "hello-world-foo-bar".to_string(),
             channel: "8".to_string(),
             signal_level: "-89.00".to_string(),
-            security: "".to_string(),
+            security: "PSK".to_string(),
         });
 
         // FIXME: should be a better way to create test fixtures
-        let mut path = PathBuf::new();
-        path.push("tests");
-        path.push("fixtures");
-        path.push("iw");
-        path.push("iw_dev_scan_01.txt");
-
-        let file_path = path.as_os_str();
-
-        let mut file = File::open(&file_path).unwrap();
-
+        let path = PathBuf::from("tests/fixtures/iw/iw_dev_scan_01.txt");
+        let mut file = File::open(&path).unwrap();
         let mut filestr = String::new();
         let _ = file.read_to_string(&mut filestr).unwrap();
 
         let result = parse_iw_dev_scan(&filestr).unwrap();
         assert_eq!(expected[0], result[0]);
-        assert_eq!(expected[1], result[5]);
+        assert_eq!(expected[1], result[4]);
     }
 }
