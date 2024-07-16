@@ -59,7 +59,7 @@ fn scan_nm() -> Result<Vec<Wifi>> {
 
 /// Returns a list of WiFi hotspots in your area - (Linux) uses `iw`
 fn scan_iw() -> Result<Vec<Wifi>> {
-    const PATH_ENV: &'static str = "PATH";
+    const PATH_ENV: &str = "PATH";
     let path_system = "/usr/sbin:/sbin";
     let path = env::var_os(PATH_ENV).map_or(path_system.to_string(), |v| {
         format!("{}:{}", v.to_string_lossy().into_owned(), path_system)
@@ -96,8 +96,8 @@ fn parse_iw_dev(interfaces: &str) -> Result<String> {
         .take(2)
         .last()
         .ok_or(Error::NoValue)?
-        .split("\n")
-        .nth(0)
+        .lines()
+        .next()
         .ok_or(Error::NoValue)
         .map(|text| text.to_string())
 }
@@ -174,7 +174,7 @@ mod tests {
 
         // FIXME: should be a better way to create test fixtures
         let path = PathBuf::from("tests/fixtures/iw/iw_dev_01.txt");
-        let mut file = File::open(&path).unwrap();
+        let mut file = File::open(path).unwrap();
 
         let mut filestr = String::new();
         let _ = file.read_to_string(&mut filestr).unwrap();
@@ -185,26 +185,26 @@ mod tests {
 
     #[test]
     fn should_parse_iw_dev_scan() {
-        let mut expected: Vec<Wifi> = Vec::new();
-        expected.push(Wifi {
-            mac: "11:22:33:44:55:66".to_string(),
-            ssid: "hello".to_string(),
-            channel: "10".to_string(),
-            signal_level: "-67.00".to_string(),
-            security: "PSK".to_string(),
-        });
-
-        expected.push(Wifi {
-            mac: "66:77:88:99:aa:bb".to_string(),
-            ssid: "hello-world-foo-bar".to_string(),
-            channel: "8".to_string(),
-            signal_level: "-89.00".to_string(),
-            security: "PSK".to_string(),
-        });
+        let mut expected: Vec<Wifi> = vec![
+            Wifi {
+                mac: "11:22:33:44:55:66".to_string(),
+                ssid: "hello".to_string(),
+                channel: "10".to_string(),
+                signal_level: "-67.00".to_string(),
+                security: "PSK".to_string(),
+            },
+            Wifi {
+                mac: "66:77:88:99:aa:bb".to_string(),
+                ssid: "hello-world-foo-bar".to_string(),
+                channel: "8".to_string(),
+                signal_level: "-89.00".to_string(),
+                security: "PSK".to_string(),
+            },
+        ];
 
         // FIXME: should be a better way to create test fixtures
         let path = PathBuf::from("tests/fixtures/iw/iw_dev_scan_01.txt");
-        let mut file = File::open(&path).unwrap();
+        let mut file = File::open(path).unwrap();
         let mut filestr = String::new();
         let _ = file.read_to_string(&mut filestr).unwrap();
 

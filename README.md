@@ -3,7 +3,6 @@
 __This is a fork.__
 
 [![CI](https://github.com/booyaa/wifiscanner/workflows/CI/badge.svg)](https://github.com/SubconsciousCompute/wifiscanner/actions?query=workflow%3ACI)
-[![dependency status](https://deps.rs/repo/github/SubconsciousCompute/wifiscanner/status.svg)](https://deps.rs/repo/github/booyaa/wifiscanner)
 
 ## Important note to existing contributors!
 
