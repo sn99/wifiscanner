@@ -1,22 +1,23 @@
-use crate::{Error, Result, Wifi};
+use crate::Wifi;
+use anyhow::Context;
 
 /// Returns a list of WiFi hotspots in your area - (OSX/MacOS) uses `airport`
-pub(crate) fn scan() -> Result<Vec<Wifi>> {
+pub(crate) fn scan() -> anyhow::Result<Vec<Wifi>> {
     use std::process::Command;
+
     let output = Command::new(
         "/System/Library/PrivateFrameworks/Apple80211.\
          framework/Versions/Current/Resources/airport",
     )
     .arg("-s")
-    .output()
-    .map_err(|_| Error::CommandNotFound)?;
+    .output()?;
 
     let data = String::from_utf8_lossy(&output.stdout);
 
     parse_airport(&data)
 }
 
-fn parse_airport(network_list: &str) -> Result<Vec<Wifi>> {
+fn parse_airport(network_list: &str) -> anyhow::Result<Vec<Wifi>> {
     let mut wifis: Vec<Wifi> = Vec::new();
     let mut lines = network_list.lines();
     let headers = match lines.next() {
@@ -31,9 +32,9 @@ fn parse_airport(network_list: &str) -> Result<Vec<Wifi>> {
         .map(|header| {
             headers_string
                 .find(header)
-                .ok_or(Error::HeaderNotFound(header))
+                .context("HeaderNotFound in {header:?}")
         })
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<anyhow::Result<Vec<_>>>()?;
     let col_mac = col_headers[0];
     let col_rrsi = col_headers[1];
     let col_channel = col_headers[2];
@@ -53,6 +54,7 @@ fn parse_airport(network_list: &str) -> Result<Vec<Wifi>> {
             channel: channel.to_string(),
             signal_level: signal_level.to_string(),
             security: security.to_string(),
+            ..Default::default()
         });
     }
 
@@ -101,16 +103,13 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn should_not_parse_other() {
         let path = PathBuf::from("tests/fixtures/iw/iw_dev_01.txt");
         let file_path = path.as_os_str();
         let mut file = File::open(&file_path).unwrap();
         let mut filestr = String::new();
         file.read_to_string(&mut filestr).unwrap();
-
-        assert_eq!(
-            parse_airport(&filestr).err().unwrap(),
-            Error::HeaderNotFound("BSSID")
-        );
+        parse_airport(&filestr).unwrap(); // must panic
     }
 }
