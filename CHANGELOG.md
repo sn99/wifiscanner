@@ -2,12 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.6.1] - 2024-07-17
 
 ### 🚀 Features
 
-- Use anyhow on OSX as well
-
+- Use anyhow (#3)
 
 ## [0.6.0] - 2024-07-16
 
