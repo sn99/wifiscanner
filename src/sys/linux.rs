@@ -6,11 +6,12 @@ use crate::Wifi;
 
 /// Returns a list of WiFi hotspots in your area - (Linux). uses `nmcli` or `iw`.
 pub(crate) fn scan() -> anyhow::Result<Vec<Wifi>> {
-    scan_nm().and_then(|_| scan_iw())
+    scan_nm().or_else(|_| scan_iw())
 }
 
 /// Returns a list of WiFi hotspots in your area - (Linux) uses `nmcli`
 fn scan_nm() -> anyhow::Result<Vec<Wifi>> {
+    tracing::info!("Scanning using nmcli...");
     let output = Command::new("nmcli")
         .arg("--color")
         .arg("no")
@@ -23,6 +24,7 @@ fn scan_nm() -> anyhow::Result<Vec<Wifi>> {
         .output()?;
 
     let data = String::from_utf8_lossy(&output.stdout);
+    tracing::debug!(">> {data}");
 
     let mut result = vec![];
     for line in data.lines() {
