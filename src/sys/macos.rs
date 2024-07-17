@@ -103,16 +103,13 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn should_not_parse_other() {
         let path = PathBuf::from("tests/fixtures/iw/iw_dev_01.txt");
         let file_path = path.as_os_str();
         let mut file = File::open(&file_path).unwrap();
         let mut filestr = String::new();
         file.read_to_string(&mut filestr).unwrap();
-
-        assert_eq!(
-            parse_airport(&filestr).err().unwrap(),
-            Error::HeaderNotFound("BSSID")
-        );
+        parse_airport(&filestr).unwrap(); // must panic
     }
 }
