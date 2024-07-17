@@ -48,8 +48,6 @@ mod sys;
 use std::fmt;
 use std::process::ExitStatus;
 
-type Result<T> = std::result::Result<T, Error>;
-
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
@@ -94,10 +92,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
-
 /// Returns a list of WiFi hotspots in your area.
 /// Uses `airport` on macOS and `iw` on Linux.
-pub fn scan() -> Result<Vec<Wifi>> {
+pub fn scan() -> anyhow::Result<Vec<Wifi>> {
     crate::sys::scan()
 }

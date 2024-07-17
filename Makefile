@@ -1,4 +1,4 @@
-.PHONY: check format test lint fix
+.PHONY: check format test lint fix fmt
 
 check:
 	@cargo check
@@ -19,3 +19,6 @@ checks: check format test lint
 
 fix:
 	@cargo clippy --fix --allow-dirty
+
+fmt:
+	@cargo +nightly fmt

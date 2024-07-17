@@ -1,19 +1,19 @@
 #![cfg(windows)]
 use regex::Regex;
 
+use anyhow::Context;
 use std::os::windows::process::CommandExt;
 use std::process::Command;
 
-use crate::{Error, Result, Wifi};
+use crate::Wifi;
 
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 /// Returns a list of WiFi hotspots in your area - (Windows) uses `netsh`
-pub fn scan() -> Result<Vec<Wifi>> {
+pub fn scan() -> anyhow::Result<Vec<Wifi>> {
     let output = Command::new("netsh.exe")
         .args(["wlan", "show", "networks", "mode=Bssid"])
-        .output()
-        .map_err(|_| Error::CommandNotFound)?;
+        .output()?;
 
     let data = String::from_utf8_lossy(&output.stdout);
 
@@ -21,22 +21,21 @@ pub fn scan() -> Result<Vec<Wifi>> {
 }
 
 /// Returns a list of WiFi interfaces - (Windows) uses `netsh`  
-pub fn show_interfaces() -> Result<Vec<Wifi>> {
+pub fn show_interfaces() -> anyhow::Result<Vec<Wifi>> {
     let output = Command::new("netsh.exe")
         .args(["wlan", "show", "interfaces"])
         .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map_err(|_| Error::CommandNotFound)?;
+        .output()?;
 
     let data = String::from_utf8_lossy(&output.stdout);
     parse_netsh_interface_list(&data)
 }
 
-fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
+fn parse_netsh_interface_list(interface_list: &str) -> anyhow::Result<Vec<Wifi>> {
     let mut wifis = Vec::new();
 
     // Regex for matching split, SSID and MAC, since these aren't pulled directly
-    let split_regex = Regex::new("\nName").map_err(|_| Error::SyntaxRegexError)?;
+    let split_regex = Regex::new("\nName")?;
 
     for block in split_regex.split(interface_list) {
         let mut wifi_ssid = String::new();
@@ -69,7 +68,7 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
                     .unwrap_or("")
                     .trim()
                     .replace('%', "");
-                let percent: i32 = percent.parse().map_err(|_| Error::SyntaxRegexError)?;
+                let percent: i32 = percent.parse()?;
                 wifi_rssi = percent / 2 - 100;
             } else if line.contains("Channel") {
                 wifi_channel = line.split(':').nth(1).unwrap_or("").trim().to_string();
@@ -87,13 +86,13 @@ fn parse_netsh_interface_list(interface_list: &str) -> Result<Vec<Wifi>> {
     Ok(wifis)
 }
 
-fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
+fn parse_netsh_network_list(network_list: &str) -> anyhow::Result<Vec<Wifi>> {
     let mut wifis = Vec::new();
 
     // Regex for matching split, SSID and MAC, since these aren't pulled directly
-    let split_regex = Regex::new("\nSSID").map_err(|_| Error::SyntaxRegexError)?;
-    let ssid_regex = Regex::new("^ [0-9]* : ").map_err(|_| Error::SyntaxRegexError)?;
-    let mac_regex = Regex::new("[a-fA-F0-9:]{17}").map_err(|_| Error::SyntaxRegexError)?;
+    let split_regex = Regex::new("\nSSID")?;
+    let ssid_regex = Regex::new("^ [0-9]* : ")?;
+    let mac_regex = Regex::new("[a-fA-F0-9:]{17}")?;
 
     for block in split_regex.split(network_list) {
         let mut wifi_macs = Vec::new();
@@ -108,11 +107,11 @@ fn parse_netsh_network_list(network_list: &str) -> Result<Vec<Wifi>> {
             } else if line.contains("Authentication") {
                 wifi_security = line.split(':').nth(1).unwrap_or("").trim().to_string();
             } else if line.contains("BSSID") {
-                let captures = mac_regex.captures(line).ok_or(Error::SyntaxRegexError)?;
-                wifi_macs.push(captures.get(0).ok_or(Error::SyntaxRegexError)?);
+                let captures = mac_regex.captures(line).context("RegexSyntaxError")?;
+                wifi_macs.push(captures.get(0).context("SyntaxRegexError")?);
             } else if line.contains("Signal") {
                 let percent = line.split(':').nth(1).unwrap_or("").trim().replace('%', "");
-                let percent: i32 = percent.parse().map_err(|_| Error::SyntaxRegexError)?;
+                let percent: i32 = percent.parse()?;
                 wifi_rssi.push(percent / 2 - 100);
             } else if line.contains("Channel") {
                 wifi_channels.push(line.split(':').nth(1).unwrap_or("").trim().to_string());
