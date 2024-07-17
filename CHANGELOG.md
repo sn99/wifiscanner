@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2024-07-17
+
+### Hotfix
+
+- Fixes to spurious iw call
+
 ## [0.6.1] - 2024-07-17
 
 ### 🚀 Features
